@@ -1,0 +1,310 @@
+FoamFile
+{
+    format ascii;
+    class dictionary;
+    object snappyHexMeshDict;
+}
+
+castellatedMesh true;
+snap true;
+addLayers true;
+
+
+// SUPERFICI DEL DOMINIO + REGIONI DI RAFFINAMENTO
+geometry
+{
+    inlet.stl
+    {
+        type triSurfaceMesh;
+        name inlet;
+    }
+
+    outlet.stl
+    {
+        type triSurfaceMesh;
+        name outlet;
+    }
+
+    top.stl
+    {
+        type triSurfaceMesh;
+        name top;
+    }
+
+    front.stl
+    {
+        type triSurfaceMesh;
+        name front;
+    }
+
+    back.stl
+    {
+        type triSurfaceMesh;
+        name back;
+    }
+
+    rocketAirbrake.stl
+    {
+        type triSurfaceMesh;
+        name rocketAirbrake;
+    }
+
+    rocketRefinement
+    {
+        type searchableBox;
+        min (-0.20 -0.20 -0.30);
+        max (3.55 0.35 0.30);
+    }
+
+    airbrakeRefinement
+    {
+        type searchableBox;
+        min (2.05 0.00 -0.16);
+        max (2.25 0.20 0.16);
+    }
+
+    paddleRefinement
+    {
+        type searchableBox;
+        min (2.115 0.072 -0.05);
+        max (2.155 0.13 0.05);
+    }
+
+    paddleWide
+    {
+        type searchableBox;
+        min (2.03 0.06 -0.07);
+        max (2.24 0.15 0.07);
+    }
+
+    paddleTight
+    {
+        type searchableBox;
+        min (2.122 0.074 -0.046);
+        max (2.148 0.128 0.046);
+    }
+
+    noseRefinement
+    {
+        type searchableBox;
+        min (-0.10 -0.10 -0.10);
+        max ( 0.20  0.15  0.10);
+    }
+}
+
+
+// RAFFINAMENTO E SELEZIONE DEL FLUIDO
+castellatedMeshControls
+{
+    maxLocalCells 6000000;
+    maxGlobalCells 12000000;
+
+    minRefinementCells 0;
+    maxLoadUnbalance 0.10;
+    nCellsBetweenLevels 3;
+
+    features ();
+
+    refinementSurfaces
+    {
+        inlet
+        {
+            level (1 1);
+            patchInfo
+            {
+                type patch;
+            }
+        }
+    
+        outlet
+        {
+            level (1 1);
+            patchInfo
+            {
+                type patch;
+            }
+        }
+    
+        top
+        {
+            level (1 2);
+            patchInfo
+            {
+                type patch;
+            }
+        }
+    
+        front
+        {
+            level (1 1);
+            patchInfo
+            {
+                type symmetry;
+            }
+        }
+    
+        back
+        {
+            level (1 1);
+            patchInfo
+            {
+                type symmetry;
+            }
+        }
+    
+        rocketAirbrake
+        {
+            level (6 6);
+            patchInfo
+            {
+                type wall;
+            }
+        }
+    }
+    
+    resolveFeatureAngle 30;
+    
+    refinementRegions
+    {
+        rocketRefinement
+        {
+            mode inside;
+            levels ((1e15 4));
+        }
+    
+        airbrakeRefinement
+        {
+            mode inside;
+            levels ((1e15 6));
+        }
+    
+        paddleRefinement
+        {
+            mode inside;
+            levels ((1e15 9));
+        }
+
+        paddleWide
+        {
+            mode inside;
+            levels ((1e15 8));
+        }
+
+        paddleTight
+        {
+            mode inside;
+            levels ((1e15 10));
+        }
+
+        noseRefinement
+        {
+            mode inside;
+            levels ((1e15 6));
+        }
+    }
+
+    locationInMesh (0.123 1.123 0.123);
+
+    allowFreeStandingZoneFaces true;
+} 
+
+// ADATTAMENTO DELLA MESH ALLE SUPERFICI
+snapControls
+{
+    nSmoothPatch 5;
+    tolerance 2.0;
+
+    nSolveIter 100;
+    nRelaxIter 8;
+
+    nFeatureSnapIter 15;
+
+    implicitFeatureSnap true;
+    explicitFeatureSnap false;
+    multiRegionFeatureSnap true;
+
+    nSmoothInternal 0;
+}
+
+
+// LAYER: PREPARATI, MA NON ANCORA ATTIVI
+addLayersControls
+{
+    meshShrinker displacementMotionSolver;
+
+    solver displacementLaplacian;
+
+    displacementLaplacianCoeffs
+    {
+        diffusivity quadratic inverseDistance
+            (rocketAirbrake);
+    }
+
+    relativeSizes false;
+
+    layers
+    {
+        rocketAirbrake
+        {
+            nSurfaceLayers 15;
+        }
+    }
+
+    firstLayerThickness 2.633333333333333e-5;
+    expansionRatio 1.2;
+    minThickness 1e-6;
+
+    nGrow 0;
+
+    featureAngle 130;
+    slipFeatureAngle 30;
+
+    nRelaxIter 5;
+
+    nSmoothSurfaceNormals 1;
+    nSmoothNormals 1;
+    nSmoothThickness 2;
+
+    maxFaceThicknessRatio 0.5;
+    maxThicknessToMedialRatio 0.5;
+    minMedialAxisAngle 90;
+
+    nBufferCellsNoExtrude 0;
+
+    nLayerIter 100;
+    nRelaxedIter 50;
+}
+
+
+// CONTROLLI DI QUALITA
+meshQualityControls
+{
+    maxNonOrtho 65;
+
+    maxBoundarySkewness 20;
+    maxInternalSkewness 4;
+
+    maxConcave 120;
+    minFlatness 0.5;
+
+    minVol 1e-13;
+    minTetQuality -1e30;
+    minArea -1;
+
+    minTwist -1;
+    minDeterminant 1e-7;
+
+    minFaceWeight 0.02;
+    minVolRatio 0.01;
+    minTriangleTwist -1;
+
+    nSmoothScale 4;
+    errorReduction 0.75;
+
+    relaxed
+    {
+        maxNonOrtho 75;
+    }
+}
+
+mergeTolerance 1e-6;
