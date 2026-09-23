@@ -240,8 +240,6 @@ paletta3D[] = Extrude {tPaletta, 0, 0}
 
 
 // RACCORDO SUGLI SPIGOLI ESTERNI DELLA PALETTA
-// curve 502 e 545: i due archi a r = 0.125 (bordo esterno) sulle facce x = 2.13 e x = 2.14.
-// Come nel caso 2D: raccordo solo sugli spigoli esterni.
 rFillet = 0.0007;
 paletta3Dfillet[] = Fillet{paletta3D[1]}{502, 545}{rFillet};
 
@@ -280,9 +278,6 @@ Physical Surface("front", 568) = {519, 529};
 
 Physical Surface("back", 569) = {301, 528};
 
-// dopo il raccordo la numerazione delle superfici cambia:
-// paletta = 520, 521, 522, 524, 525, 526, 527 (522 e 526 sono i raccordi)
-// razzo   = 530, 531, 532, 533, 534
 Physical Surface("rocketAirbrake", 570) = {530, 531, 532, 533, 534, 520, 521, 522, 524, 525, 526, 527};
 
 
