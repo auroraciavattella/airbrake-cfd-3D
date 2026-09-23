@@ -68,8 +68,9 @@ obtained by changing the `H_airbrake` parameter in the parametric Gmsh
 geometry.
 
 - `0/`: initial and boundary conditions for the flow fields;
-- `constant/`: fluid properties, turbulence model settings, and the
-  `triSurface/` STL geometry used by `snappyHexMesh`;
+- `constant/`: fluid properties and turbulence model settings (the
+  `triSurface/` STL geometry is not included — see "Mesh generation"
+  below);
 - `system/`: mesh generation dictionaries (`blockMeshDict`,
   `snappyHexMeshDict`), numerical schemes, solver settings, and the
   `forceCoeffs` function object used to compute C_D;
@@ -80,6 +81,12 @@ geometry.
 The `constant/polyMesh` folder is not included in this repository due to
 the large size of the mesh files (≈2.3 million cells).
 
+The `constant/triSurface/` folder (surface STL files: `inlet.stl`,
+`outlet.stl`, `top.stl`, `front.stl`, `back.stl`,
+`rocketAirbrake.stl`) is not included either. All surfaces must be
+regenerated from the parametric geometry in `gmsh/` before running
+`blockMesh`/`snappyHexMesh`.
+
 Surface geometry (`inlet`, `outlet`, `top`, `front`, `back`,
 `rocketAirbrake`) is first built parametrically in Gmsh and exported as
 STL files. The volume mesh is then generated directly in OpenFOAM:
@@ -89,6 +96,61 @@ blockMesh
 decomposePar
 mpirun -np 64 snappyHexMesh -overwrite -parallel
 reconstructParMesh -constant
+```
+
+Check mesh quality with:
+
+```bash
+checkMesh -allGeometry -allTopology
+```
+
+Note: given the thin boundary layer cells required, `checkMesh` does not
+report a clean "Mesh OK" on this case — a small fraction of cells fail the
+determinant, cell-concavity, and tetrahedron-decomposition checks,
+concentrated in the wall layers and in mesh-refinement transition zones.
+This is expected with the imposed layer thickness and did not prevent the
+solver from converging.
+
+## Running the simulation
+
+Simulations were run with `simpleFoam`.
+
+To run in parallel (64 processors, matching
+`system/decomposeParDict`):
+
+```bash
+decomposePar
+mpirun -np 64 simpleFoam -parallel
+reconstructPar
+```
+
+The case was run for up to 4000 iterations and considered converged when
+the variation of C_D over the last 100–200 iterations dropped below
+approximately 0.5% — residual-based convergence criteria alone were found
+to be insufficient (see the accompanying thesis, Section 5.1).
+
+## Results analyzed
+
+The simulation provides:
+
+- aerodynamic forces on the rocket body and airbrake panel, and the
+  resulting C_D of the full three-panel system (via periodicity, without
+  summing forces from the three sectors);
+- velocity and pressure fields around the panel at 40% and 100% opening;
+- y⁺ distribution by wetted-surface zone;
+- a comparison with the preliminary 2D model, from which a correction
+  factor K₃D ≈ 0.22 was derived.
+
+## Limitations
+
+The domain assumes flow periodicity across the three panels (identical
+panels, identical deployment, axial inflow, no attack angle). A formal
+grid-independence study was attempted but proved numerically unstable on a
+coarser mesh (see the accompanying thesis, Section 4.8.1); mesh quality
+was instead verified through standard `checkMesh` indicators and through
+monitoring of C_D stability. The model does not represent the transient
+deployment motion of the panel nor time-varying atmospheric conditions
+during flight.
 
 ## Author
 
