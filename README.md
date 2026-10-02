@@ -16,7 +16,7 @@ the periodicity of the three-panel system.
 
 ## Numerical model
 
-The system consists of three identical rectangular airbrake panels, spaced
+The system consists of three identical trapezoidal airbrake panels, spaced
 120° apart around the rocket body. Assuming symmetric flow conditions, the
 computational domain is reduced to a single 120° periodic sector containing
 one panel, with the two lateral faces (`front`, `back`) treated as symmetry
@@ -27,7 +27,7 @@ maximum panel deployment height.
 
 Main simulation settings:
 
-- **software:** OpenFOAM v2506 (ESI/OpenCFD);
+- **software:** OpenFOAM v2506 (ESI/OpenCFD), Gmsh 4.15.2;
 - **solver:** `simpleFoam`;
 - **regime:** steady-state, incompressible;
 - **turbulence model:** RANS k–ω SST;
@@ -46,7 +46,7 @@ requested layers, ≈95% of the nominal boundary-layer thickness).
 
 ## Objectives of the analysis
 
-The simulation allows to:
+The simulation makes it possible to:
 
 - compute the aerodynamic forces acting on the rocket body and on the
   airbrake panel;
@@ -54,8 +54,8 @@ The simulation allows to:
   single periodic sector;
 - analyze the velocity and pressure fields around the panel;
 - observe flow separation and wake formation downstream of the airbrake;
-- evaluate the y⁺ distribution on the wetted surfaces, by zone (panel,
-  body, nose, tail);
+- evaluate the y⁺ distribution on the surfaces, by zone (panel,
+  region around the panel, body, nose, tail);
 - correlate the 3D results with the preliminary 2D model to derive a
   correction factor (K₃D) usable in a control-oriented lookup table.
 
@@ -88,8 +88,8 @@ regenerated from the parametric geometry in `gmsh/` before running
 `blockMesh`/`snappyHexMesh`.
 
 Surface geometry (`inlet`, `outlet`, `top`, `front`, `back`,
-`rocketAirbrake`) is first built parametrically in Gmsh and exported as
-STL files. The volume mesh is then generated directly in OpenFOAM:
+`rocketAirbrake`) is first built parametrically in Gmsh and exported in OpenFOAM as
+STL files in the `triSurface` folder. The volume mesh is then generated directly in OpenFOAM:
 
 ```bash
 blockMesh
@@ -104,7 +104,9 @@ Check mesh quality with:
 checkMesh -allGeometry -allTopology
 ```
 
-Note: given the thin boundary layer cells required, `checkMesh` does not
+### Mesh quality
+
+Given the thin boundary layer cells required, `checkMesh` does not
 report a clean "Mesh OK" on this case — a small fraction of cells fail the
 determinant, cell-concavity, and tetrahedron-decomposition checks,
 concentrated in the wall layers and in mesh-refinement transition zones.
@@ -124,10 +126,9 @@ mpirun -np 64 simpleFoam -parallel
 reconstructPar
 ```
 
-The case was run for up to 4000 iterations and considered converged when
-the variation of C_D over the last 100–200 iterations dropped below
-approximately 0.5% — residual-based convergence criteria alone were found
-to be insufficient (see the accompanying thesis, Section 5.1).
+The case was run for up to 4000 iterations and considered converged when C_D
+no longer showed appreciable variations; residuals alone were found to be
+insufficient (see the thesis, Section 2.5).
 
 ## Results analyzed
 
@@ -144,13 +145,9 @@ The simulation provides:
 ## Limitations
 
 The domain assumes flow periodicity across the three panels (identical
-panels, identical deployment, axial inflow, no attack angle). A formal
-grid-independence study was attempted but proved numerically unstable on a
-coarser mesh (see the accompanying thesis, Section 4.8.1); mesh quality
-was instead verified through standard `checkMesh` indicators and through
-monitoring of C_D stability. The model does not represent the transient
-deployment motion of the panel nor time-varying atmospheric conditions
-during flight.
+panels, identical deployment, axial inflow, no attack angle). Grid independence 
+was assessed on the quasi-2D model (thesis, Section 2.3.7); for the 3D case, mesh 
+quality was verified through checkMesh indicators and by monitoring the stability of C_D.
 
 ## Author
 
